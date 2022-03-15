@@ -19,6 +19,7 @@ mtcnn = MTCNN(image_size=240, margin=0, min_face_size=20) # initializing mtcnn f
 resnet = InceptionResnetV1(pretrained='vggface2').eval() # initializing resnet for face img to embeding conversion
 
 def face_match(img_ori, img_gen):
+
     face_ori = mtcnn(img_ori) # returns cropped face
     face_gen = mtcnn(img_gen)
     emb_ori = resnet(face_ori.unsqueeze(0)).detach() # detech is to make required gradient false
@@ -59,13 +60,12 @@ def inference(generator, out_dir, data_loader, device_comp, num_classes = 1200):
         img_generated = im_gen.detach().clone() #img_out
         
         #facenet
-        dist = face_match(img_original, img_generated)
-        print(dist)
+        #dist = face_match(img_original, img_generated)
         
-        if dist > threshold:# (de acordo com alguns papers, d>0.7)
-            dists.append(0) 
-        else:
-            dists.append(1)
+        #if dist > threshold:# (de acordo com alguns papers, d>0.7)
+        #    dists.append(0) 
+        #else:
+        #    dists.append(1)
     
     print("Done.")
 

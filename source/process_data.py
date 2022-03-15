@@ -21,8 +21,10 @@ def get_lndm(path_img, path_out, start_id = 0, dlib_path=""):
     predictor = dlib.shape_predictor(dlib_path+"shape_predictor_68_face_landmarks.dat")
 
     line_px = 1
-    res_w = 178
-    res_h = 218
+    res_w = 224
+    res_h = 224
+    #res_w = 178
+    #res_h = 218
 
     for fld in folder_list[:]:
         imglist_all = [f[:-4] for f in listdir(join(path_img, fld)) if isfile(join(path_img, fld, f)) and f[-4:] == ".jpg"]
@@ -54,12 +56,12 @@ def get_lndm(path_img, path_out, start_id = 0, dlib_path=""):
                 w_r = int(h_r/res_h*res_w)
 
                 w, h = int(w_r * 2), int(h_r * 2)
-                pd = int(w) # padding size
-                
+                pd = int(w) #padding size
+                # a sugestao seria ao inves de dar padding dar resize
                 img_p = np.zeros((img.shape[0]+pd*2, img.shape[1]+pd*2, 3), np.uint8) * 255
-                img_p[:, :, 0] = np.pad(img[:, :, 0], pd, 'edge')
-                img_p[:, :, 1] = np.pad(img[:, :, 1], pd, 'edge')
-                img_p[:, :, 2] = np.pad(img[:, :, 2], pd, 'edge')
+                img_p[:, :, 0] = np.pad(img[:, :, 0], pd, 'constant') # clr fica esticado
+                img_p[:, :, 1] = np.pad(img[:, :, 1], pd, 'constant')
+                img_p[:, :, 2] = np.pad(img[:, :, 2], pd, 'constant')
                 
                 visual = img_p[c_y - h_r+pd:c_y + h_r+pd, c_x - w_r+pd:c_x + w_r+pd]
 
