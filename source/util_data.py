@@ -41,7 +41,7 @@ class ImageDataset(torch.utils.data.Dataset):
         self.root_lndm = 'lndm/'
         self.root_msk = 'msk/'
         self.im_label, self.im_paths, self.im_index = [], [], []
-
+        self.samples_fnames = []
         self.flag_augment = flag_augment
 
         if flag_init:
@@ -49,8 +49,12 @@ class ImageDataset(torch.utils.data.Dataset):
             for it_i in range(label_num):
                 imglist_all = [f for f in listdir(root_dir+self.root_lndm + str(it_i)) if isfile(join(root_dir, self.root_lndm + str(it_i), f)) and f[-4:] == ".jpg"]
                 imglist_all_int = [int(x[:-4]) for x in imglist_all]
+                #print(imglist_all_int); import sys; sys.exit(0)
+                
                 imglist_all_int.sort()
-                imglist_all = [(str(x).zfill(6) + ".jpg") for x in imglist_all_int]
+                self.samples_fnames = imglist_all_int.copy()
+                #imglist_all = [(str(x).zfill(6) + ".jpg") for x in imglist_all_int]
+                imglist_all = [(str(x) + ".jpg") for x in imglist_all_int]
 
                 self.im_label += [it_i] * len(imglist_all)
                 self.im_paths += imglist_all
@@ -99,7 +103,7 @@ class ImageDataset(torch.utils.data.Dataset):
         for k_iter in range(self.flag_sample):
             self.crop_rnd = [random.random(), random.random(), random.random(), random.random()]
             im_clr_path = os.path.join(self.root_dir, self.root_img, str(self.im_label[idx[k_iter]]), self.im_paths[idx[k_iter]])
-            clr_img = self.load_img(im_clr_path)
+            clr_img = self.load_img(im_clr_path)   
             im_clr.append(clr_img)
 
             im_lndm_path = os.path.join(self.root_dir, self.root_lndm, str(self.im_label[idx[k_iter]]), self.im_paths[idx[k_iter]])

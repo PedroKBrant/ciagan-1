@@ -41,6 +41,7 @@ def face_match(img_path, data_path): # img_path= location of photo, data_path= l
     name_list = saved_data[1] # getting list of names
     dist_list = [] # list of matched distances, minimum distance is used to identify the person
     
+    #TODO compare only with original image
     for idx, emb_db in enumerate(embedding_list):
         dist = torch.dist(emb, emb_db).item()
         dist_list.append(dist)
@@ -48,9 +49,11 @@ def face_match(img_path, data_path): # img_path= location of photo, data_path= l
     idx_min = dist_list.index(min(dist_list))
     return (name_list[idx_min], min(dist_list))
 
-for number in range(150):
-    index = 0
-    print(number)
-    result = face_match('output/000'+"{:03d}".format(number)+'.jpg', 'data.pt')
-    print('Face matched with: ',result[index], 'With distance: ',result[index+1])
-    index = index + 2
+#for number in range(150):
+#    index = 0
+#    result = face_match('output/000'+"{:03d}".format(number)+'.jpg', 'data.pt')
+#    print('Face matched with: ',result[index], 'With distance: ',result[index+1])   
+#    index = index + 2
+
+result = face_match('dataset/celeba/clr/0/032486.jpg', 'data.pt')
+print('Face matched with: ',result[0], 'With distance: ',result[1]) 
