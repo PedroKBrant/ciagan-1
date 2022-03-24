@@ -13,6 +13,7 @@ from os.path import join
 from os import listdir
 import arch.arch_unet_flex as arch_gen
 import argparse
+from tqdm import tqdm
 from facenet_pytorch import MTCNN, InceptionResnetV1
 
 mtcnn = MTCNN(image_size=240, margin=0, min_face_size=20) # initializing mtcnn for face detection
@@ -32,6 +33,7 @@ def inference(generator, out_dir, data_loader, device_comp, num_classes = 1200):
     dists = []
     results = []
     threshold = 0.7
+    #for batch in enumerate(tqdm(data_loader)):
     for batch in data_loader:
         # prepare data
         #print(fnames); import sys; sys.exit(0)
