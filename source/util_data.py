@@ -43,14 +43,16 @@ class ImageDataset(torch.utils.data.Dataset):
         self.im_label, self.im_paths, self.im_index = [], [], []
 
         self.flag_augment = flag_augment
+        
+        pkb = os.listdir(os.path.join(self.root_dir, self.root_msk)) # lista com o nome das pastas
 
         if flag_init:
             it_j=0
-            for it_i in range(label_num):
+            for it_i in pkb:
                 imglist_all = [f for f in listdir(root_dir+self.root_lndm + str(it_i)) if isfile(join(root_dir, self.root_lndm + str(it_i), f)) and f[-4:] == ".jpg"]
                 imglist_all_int = [int(x[:-4]) for x in imglist_all]
                 imglist_all_int.sort()
-                imglist_all = [(str(x).zfill(6) + ".jpg") for x in imglist_all_int]
+                imglist_all = [(str(x).zfill(0) + ".jpg") for x in imglist_all_int]
 
                 self.im_label += [it_i] * len(imglist_all)
                 self.im_paths += imglist_all
@@ -62,7 +64,7 @@ class ImageDataset(torch.utils.data.Dataset):
         return len(self.im_label)
 
     def load_img(self, im_path):
-        im = Image.open(im_path)        
+        im = transforms.Resize((218, 178))(Image.open(im_path))     
         im = im.resize([int(self.img_shape[0]*1.125)]*2, resample=Image.LANCZOS)
         w, h = im.size
 
