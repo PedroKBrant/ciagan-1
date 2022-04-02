@@ -8,12 +8,15 @@ Created on Thu Mar 24 17:43:38 2022
 import os
 import shutil
 
-dir = "exp24_/"
+dir = "exp01/"
 
+count = 0
 for file in os.listdir(dir):
-    # get all but the last 8 characters to remove
-    # the index number and extension
-    dir_name = file.replace('.jpg', '')
+
+    filename = str(count)+".jpg"
+    os.rename(dir+file, f"exp01/"+filename)
+    dir_name = str(count)
+    count +=1
     print(f'dir_name: {dir_name}')
 
     dir_path = dir + dir_name
@@ -24,8 +27,9 @@ for file in os.listdir(dir):
         os.makedirs(dir_name)
 
     if os.path.exists(dir_name):
-        file_path = dir + file
+        file_path = dir + str(filename)
         print(f'file_path: {file_path}')
         
         # move files into created directory
         shutil.move(file_path, dir_name)
+    
