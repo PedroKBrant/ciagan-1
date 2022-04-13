@@ -54,7 +54,7 @@ def inference(generator, out_dir, data_loader, device_comp, num_classes = 1200):
         # output image
         img_out = transforms.ToPILImage()(im_gen[0].cpu()).convert("RGB")
         #img_out.save(join(out_dir, str(total_imgs).zfill(6) + '.jpg'))
-        img_out.save(join(out_dir, str(total_imgs) + '.jpg'))
+        img_out.save(join(out_dir, str(total_imgs) + '.jpg'))#colocar o nome da imagem de entrada
         total_imgs+=1
 
         # compare images 

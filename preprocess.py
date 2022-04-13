@@ -32,4 +32,3 @@ for file in os.listdir(dir):
         
         # move files into created directory
         shutil.move(file_path, dir_name)
-    
