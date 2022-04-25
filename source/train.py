@@ -21,6 +21,7 @@ from sacred import Experiment
 import util_func as util_func
 import util_loss as util_loss
 import util_data as util_data
+from tqdm import tqdm, trange
 
 ciagan_exp = Experiment()
 
@@ -274,7 +275,9 @@ class Train_GAN():
             self.data_iter = iter(loaders[0])
 
             # Training procedure
-            for st_iter in range(self.model_info['total_steps']):
+            #for st_iter in range(self.model_info['total_steps']):
+            pbar = trange(self.model_info['total_steps'])
+            for st_iter in pbar:
                 loss_sum[3] += self.train_siamese(num_iter_siamese=num_iter_siamese)
 
                 loss_values = self.train_critic(num_iter_critic = num_iter_critic)
@@ -289,8 +292,9 @@ class Train_GAN():
 
                 ##### Log and visualize output
                 if (st_iter + 1) % OUTPUT_PARAMS['LOG_ITER'] == 0:
-                    print(self.model_info['model_name'], 'Epoch [{}/{}], Step [{}/{}], Loss C: {:.4f}, G: {:.4f}, S: {:.4f}'
-                          .format(epoch_iter + 1, TRAIN_PARAMS['EPOCHS_NUM'], st_iter + 1, self.model_info['total_steps'], loss_sum[0] / iter_count, loss_sum[1] / iter_count, loss_sum[3] / iter_count))
+                    pbar.set_postfix_str("C: %.4f G: %.4f S: %.4f" % (loss_sum[0]/iter_count, loss_sum[1]/iter_count, loss_sum[3]/iter_count))
+                    #print(self.model_info['model_name'], 'Epoch [{}/{}], Step [{}/{}], Loss C: {:.4f}, G: {:.4f}, S: {:.4f}'
+                    #      .format(epoch_iter + 1, TRAIN_PARAMS['EPOCHS_NUM'], st_iter + 1, self.model_info['total_steps'], loss_sum[0] / iter_count, loss_sum[1] / iter_count, loss_sum[3] / iter_count))
                     total_iter = self.model_info['total_steps'] * epoch_iter + st_iter
                     loss_sum, iter_count = self.reinit_loss()
 
@@ -340,3 +344,6 @@ def run_exp(TRAIN_PARAMS):
     ##### INITIALIZE AND START TRAINING
     trainer = Train_GAN(model_info=model_info, device_comp=device_comp, num_classes=label_num, gan_type=TRAIN_PARAMS['GAN_TYPE'])
     trainer.train_model(loaders=loaders)
+    
+if __name__ == '__main__':
+    run_exp(TRAIN_PARAMS)

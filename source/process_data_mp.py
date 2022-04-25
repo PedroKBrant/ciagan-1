@@ -14,6 +14,7 @@ from PIL import Image
 import argparse
 import itertools
 import matplotlib.pyplot as plt
+from tqdm import tqdm
 
 def get_lndm(path_img, path_out, start_id = 0, dlib_path=""):
     dir_proc = {'msk':'msk', 'org':'orig', 'clr':'clr', 'lnd':'lndm'}
@@ -27,54 +28,51 @@ def get_lndm(path_img, path_out, start_id = 0, dlib_path=""):
 
     res_w = 178
     res_h = 218
-    NOSE = [1, 4, 5, 195, 197, 6]
     CONTOUR = [10, 338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288,
                397, 365, 379, 378, 400, 377, 152, 148, 176, 149, 150, 136,
-               172, 58, 132, 137, 127, 162, 21, 54, 103, 67, 109]
+               172, 58, 132, 93,234, 127, 162, 21, 54, 103, 67, 109]
+    
     # Face Mesh
+    nose = frozenset([(5,197),(197,195),(195,5),(5,4), (4,1)])
     mp_face_mesh = mp.solutions.face_mesh
     face_mesh_images = mp_face_mesh.FaceMesh(static_image_mode=True, 
                                              max_num_faces=1,
                                              min_detection_confidence=0.5)
     mp_drawing = mp.solutions.drawing_utils
+    drawing_spec = mp_drawing.DrawingSpec(thickness=2, circle_radius=1)
     mp_drawing_styles = mp.solutions.drawing_styles
     
-    for fld in folder_list[:]:
+    for fld in tqdm(folder_list[:]):
         imglist_all = [f[:-4] for f in listdir(join(path_img, fld)) 
                                    if isfile(join(path_img, fld, f)) 
                                        and f[-4:] == ".jpg"]
         imglist_all.sort(key=int)
         imglist_all = imglist_all[start_id:]
 
-        for dir_it in dir_proc:
-            if os.path.isdir(join(path_out, dir_proc[dir_it], fld)) == False:
-                os.mkdir(join(path_out, dir_proc[dir_it], fld))
-
         crop_coord = []
         for it in range(len(imglist_all)):
             clr = cv2.imread(join(path_img, fld, imglist_all[it]+".jpg"), cv2.IMREAD_ANYCOLOR)
             img_mp = clr.copy()
-            
-
-            
+             
             face_mesh_results = face_mesh_images.process(img_mp[:,:,::-1])#BGR to RGB
             
-            if  not face_mesh_results.multi_face_landmarks:
+            if not face_mesh_results.multi_face_landmarks:
                 #plt.figure(0)
                 #plt.title("Resultant Image");plt.axis('off');plt.imshow(img_mp);plt.show() 
-                print(fld)
+                #print(fld)
                 continue
      
             img_copy = img_mp.copy()
             
             left_eye =  face_mesh_results.multi_face_landmarks[0].landmark[133]
             right_eye = face_mesh_results.multi_face_landmarks[0].landmark[362]
+            
          
             # centering
-            c_x = int(((right_eye.x + left_eye.x)*100) / 2)
-            c_y = int(((right_eye.y + left_eye.y)*100) / 2)
-            w_r = int(((right_eye.x - left_eye.x)*100)*4)
-            h_r = int(((right_eye.x - left_eye.x)*100)*5)
+            c_x = int(((right_eye.x + left_eye.x)*res_w) / 2)
+            c_y = int(((right_eye.y + left_eye.y)*res_h) / 2)
+            w_r = int(((right_eye.x - left_eye.x)*res_w)*4)
+            h_r = int(((right_eye.x - left_eye.x)*res_w)*5)
             w_r = int(h_r/res_h*res_w)
 
             w, h = int(w_r * 2), int(h_r * 2)
@@ -85,25 +83,33 @@ def get_lndm(path_img, path_out, start_id = 0, dlib_path=""):
             img_p[:, :, 1] = np.pad(img_copy[:, :, 1], pd, 'constant')
             img_p[:, :, 2] = np.pad(img_copy[:, :, 2], pd, 'constant')
             
-            visual = img_p[c_y - h_r+pd:c_y + h_r+pd, c_x - w_r+pd:c_x + w_r+pd]
-
+            #visual = img_p[c_y - h_r+pd:c_y + h_r+pd, c_x - w_r+pd:c_x + w_r+pd]
+            visual = img_copy
             crop_coord.append([c_y - h_r, c_y + h_r, c_x - w_r, c_x + w_r, pd, imglist_all[it]+".jpg"])
             t_x, t_y = int(c_x - w_r), int(c_y - h_r)
 
             ratio_w, ratio_h = res_w/w, res_h/h
 
             visual = cv2.resize(visual, dsize=(res_w, res_h), interpolation=cv2.INTER_CUBIC)
+           
+            
+            face_mesh_results = face_mesh_images.process(visual[:,:,::-1])#BGR to RGB
+            if not face_mesh_results.multi_face_landmarks:
+                #plt.figure(0)
+                #plt.title("Resultant Image");plt.axis('off');plt.imshow(visual);plt.show()
+                #print(fld)
+                continue
+            for dir_it in dir_proc: # save files
+                if os.path.isdir(join(path_out, dir_proc[dir_it], fld)) == False:
+                    os.mkdir(join(path_out, dir_proc[dir_it], fld))
             cv2.imwrite(join(path_out, dir_proc['clr'], fld, imglist_all[it]+".jpg"), visual) #saving crop
             cv2.imwrite(join(path_out, dir_proc['org'], fld, imglist_all[it]+".jpg"), clr) # saving original
             
-            face_mesh_results = face_mesh_images.process(visual[:,:,::-1])#BGR to RGB
-            
-            if face_mesh_results.multi_face_landmarks:
-                img_lndm = np.ones((res_h, res_w, 3), np.uint8) * 255 #white image
-                for face_landmarks in face_mesh_results.multi_face_landmarks: 
-                    mp_drawing.draw_landmarks(image=img_lndm, landmark_list=face_landmarks,connections=mp_face_mesh.FACEMESH_CONTOURS,
-                                              landmark_drawing_spec=None, 
-                                              connection_drawing_spec=mp_drawing_styles.get_default_face_mesh_contours_style())
+            img_lndm = np.ones((res_h, res_w, 3), np.uint8) * 255 #white image
+            for face_landmarks in face_mesh_results.multi_face_landmarks: 
+                mp_drawing.draw_landmarks(image=img_lndm, landmark_list=face_landmarks,connections=mp_face_mesh.FACEMESH_CONTOURS.union(nose),
+                                          landmark_drawing_spec=None, 
+                                          connection_drawing_spec=drawing_spec)
 
             #plt.title("Resultant Image");plt.axis('off');plt.imshow(img_lndm);plt.show() 
             
@@ -115,11 +121,7 @@ def get_lndm(path_img, path_out, start_id = 0, dlib_path=""):
             contours = np.array(CONTOUR)
             contours_lndm = np.zeros((0, 2),dtype=np.int32)
             
-            if  not face_mesh_results.multi_face_landmarks:
-                #plt.figure(0)
-                #plt.title("Resultant Image");plt.axis('off');plt.imshow(visual);plt.show()
-                #print(fld)
-                continue
+
             for lndm in contours:
                 arr = np.array([[((round(face_mesh_results.multi_face_landmarks[0].landmark[lndm].x*res_w) ) ), 
                                  ((round(face_mesh_results.multi_face_landmarks[0].landmark[lndm].y*res_h) ))]],
@@ -131,7 +133,7 @@ def get_lndm(path_img, path_out, start_id = 0, dlib_path=""):
             result = Image.fromarray((img_msk).astype(np.uint8))
             result.save(join(path_out, dir_proc['msk'], fld, imglist_all[it]+".jpg"))
             
-        print("folder done",fld)   
+        #print("done ",fld)   
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
