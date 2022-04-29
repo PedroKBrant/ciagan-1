@@ -7,8 +7,8 @@ def main():
             {
                 'ARCH_NUM': 'unet_flex',
                 'ARCH_SIAM': 'resnet_siam',
-                'EPOCH_START': 0, 'EPOCHS_NUM': 2001,
-                'LEARNING_RATE': 0.0001,
+                'EPOCH_START': 0, 'EPOCHS_NUM': 101,#2001
+                'LEARNING_RATE': 0.00001,#0.0001
                 'FILTER_NUM': 16,
     
                 'ITER_CRITIC': 1,
@@ -19,9 +19,9 @@ def main():
             },
         'DATA_PARAMS':
             {
-                'LABEL_NUM': 1200,
-                'BATCH_SIZE': 8,
-                'WORKERS_NUM': 4,
+                'LABEL_NUM': 5,#1200
+                'BATCH_SIZE': 1,
+                'WORKERS_NUM': 0,
                 'IMG_SIZE': 128,
             },
         'OUTPUT_PARAMS': {

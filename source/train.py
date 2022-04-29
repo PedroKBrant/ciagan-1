@@ -255,9 +255,9 @@ class Train_GAN():
 
     @ciagan_exp.capture
     def train_model(self, loaders, TRAIN_PARAMS, OUTPUT_PARAMS):
-        self.optimizer_G = optim.Adam(self.model_info['generator'].parameters(), lr=TRAIN_PARAMS['LEARNING_RATE'], betas=(0.5, 0.999))
-        self.optimizer_C = optim.Adam(self.model_info['critic'].parameters(), lr=TRAIN_PARAMS['LEARNING_RATE'], betas=(0.5, 0.999))
-        self.optimizer_S = optim.Adam(self.model_info['siamese'].parameters(), lr=TRAIN_PARAMS['LEARNING_RATE'], betas=(0.5, 0.999))
+        self.optimizer_G = optim.Adam(self.model_info['generator'].parameters(), lr=TRAIN_PARAMS['LEARNING_RATE'], betas=(0.5, 0.9))#0.999
+        self.optimizer_C = optim.Adam(self.model_info['critic'].parameters(), lr=TRAIN_PARAMS['LEARNING_RATE'], betas=(0.5, 0.9))#0.999
+        self.optimizer_S = optim.Adam(self.model_info['siamese'].parameters(), lr=TRAIN_PARAMS['LEARNING_RATE'], betas=(0.5, 0.9))#0.999
 
         self.flag_siam_mask = TRAIN_PARAMS['FLAG_SIAM_MASK']
 
