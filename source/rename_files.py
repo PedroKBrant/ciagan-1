@@ -3,17 +3,37 @@
 Created on Wed Apr 20 17:29:47 2022
 
 @author: pkb
+
 """
 from os import listdir, mkdir
 import os
 #clr, lndm, msk, orig
-input_dir = r"../dataset/exp24_mp/msk/"
+input_dir = r"../dataset/exp19dlib/orig/"
+#output_dir = r"../dataset/celeba/"
+folder_list = [f for f in listdir(input_dir)]
+for fld in folder_list[:]:
+    for file_name in os.listdir(input_dir+fld):
+        file = str(int(os.path.splitext(file_name)[0])).zfill(6)# mudar aqui
+    print(file)
+    os.rename(input_dir+fld+'/'+file+'.jpg', input_dir+fld+'/'+str(fld).zfill(6)+'.jpg')
+     
+"""
+from os import listdir, mkdir
+import os
+#clr, lndm, msk, orig
+input_dir = r"../dataset/exp19dlib/teste/"
 #output_dir = r"../dataset/celeba/"
 folder_list = [f for f in listdir(input_dir)]
 index = 0
 for fld in folder_list[:]:
-    os.rename(input_dir+fld, input_dir+fld.zfill(5))
-    
+    print(fld)
+    os.rename(input_dir+fld, input_dir+fld.zfill(6))
+folder_list = [f for f in listdir(input_dir)]    
+for fld in folder_list[:]:
+    os.rename(input_dir+fld, input_dir+str(index))
+    index+=1
+"""        
+"""   
 folder_list = [f for f in listdir(input_dir)]
 for fld in folder_list[:]: 
     file = str(int(fld))
@@ -22,7 +42,7 @@ for fld in folder_list[:]:
     os.rename(input_dir+fld+'/'+file+'.jpg', input_dir+fld+'/'+str(index).zfill(6)+'.jpg')    
     os.rename(input_dir+fld, input_dir+str(index))
     index+=1
-    
+"""   
 """
 from os import listdir, mkdir
 import os

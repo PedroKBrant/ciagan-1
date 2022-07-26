@@ -1,11 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Aug 29 14:54:12 2018
-
-@author: maximov
-"""
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -21,7 +13,8 @@ from sacred import Experiment
 import util_func as util_func
 import util_loss as util_loss
 import util_data as util_data
-from tqdm import tqdm, trange
+
+import neptune.new as neptune
 
 ciagan_exp = Experiment()
 
@@ -255,9 +248,33 @@ class Train_GAN():
 
     @ciagan_exp.capture
     def train_model(self, loaders, TRAIN_PARAMS, OUTPUT_PARAMS):
-        self.optimizer_G = optim.Adam(self.model_info['generator'].parameters(), lr=TRAIN_PARAMS['LEARNING_RATE'], betas=(0.5, 0.9))#0.999
-        self.optimizer_C = optim.Adam(self.model_info['critic'].parameters(), lr=TRAIN_PARAMS['LEARNING_RATE'], betas=(0.5, 0.9))#0.999
-        self.optimizer_S = optim.Adam(self.model_info['siamese'].parameters(), lr=TRAIN_PARAMS['LEARNING_RATE'], betas=(0.5, 0.9))#0.999
+        run = neptune.init(
+            project="pkb/Ciagan",
+            api_token="eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiIwNzZhYWQwYS1kYzg2LTQxNGMtYTBkYy1kMTlkNDY5M2Y5MDMifQ==",
+            source_files = ['*.py'],
+        )  # your credentials
+      
+        params = {  'EPOCHS_NUM': 101,
+                    'LEARNING_RATE': 0.0001,
+                    'FILTER_NUM': 16,
+        
+                    'ITER_CRITIC': 1,
+                    'ITER_GENERATOR': 3,
+                    'ITER_SIAMESE': 1,
+        
+                    'GAN_TYPE': 'lsgan',
+                    
+                    'LABEL_NUM': 5,
+                    'BATCH_SIZE': 1,
+                    'WORKERS_NUM': 0,
+                    'IMG_SIZE': 128,
+                }
+        
+        run["parameters"] = params
+        
+        self.optimizer_G = optim.Adam(self.model_info['generator'].parameters(), lr=TRAIN_PARAMS['LEARNING_RATE'], betas=(0.5, 0.999))
+        self.optimizer_C = optim.Adam(self.model_info['critic'].parameters(), lr=TRAIN_PARAMS['LEARNING_RATE'], betas=(0.5, 0.999))
+        self.optimizer_S = optim.Adam(self.model_info['siamese'].parameters(), lr=TRAIN_PARAMS['LEARNING_RATE'], betas=(0.5, 0.999))
 
         self.flag_siam_mask = TRAIN_PARAMS['FLAG_SIAM_MASK']
 
@@ -275,9 +292,7 @@ class Train_GAN():
             self.data_iter = iter(loaders[0])
 
             # Training procedure
-            #for st_iter in range(self.model_info['total_steps']):
-            pbar = trange(self.model_info['total_steps'])
-            for st_iter in pbar:
+            for st_iter in range(self.model_info['total_steps']):
                 loss_sum[3] += self.train_siamese(num_iter_siamese=num_iter_siamese)
 
                 loss_values = self.train_critic(num_iter_critic = num_iter_critic)
@@ -292,11 +307,20 @@ class Train_GAN():
 
                 ##### Log and visualize output
                 if (st_iter + 1) % OUTPUT_PARAMS['LOG_ITER'] == 0:
-                    pbar.set_postfix_str("C: %.4f G: %.4f S: %.4f" % (loss_sum[0]/iter_count, loss_sum[1]/iter_count, loss_sum[3]/iter_count))
-                    #print(self.model_info['model_name'], 'Epoch [{}/{}], Step [{}/{}], Loss C: {:.4f}, G: {:.4f}, S: {:.4f}'
-                    #      .format(epoch_iter + 1, TRAIN_PARAMS['EPOCHS_NUM'], st_iter + 1, self.model_info['total_steps'], loss_sum[0] / iter_count, loss_sum[1] / iter_count, loss_sum[3] / iter_count))
+                    neptune_loss_C = loss_sum[0] / iter_count
+                    neptune_loss_G = loss_sum[1] / iter_count
+                    neptune_loss_S = loss_sum[3] / iter_count
+                    print(self.model_info['model_name'], 'Epoch [{}/{}], Step [{}/{}], Loss C: {:.4f}, G: {:.4f}, S: {:.4f}'
+                          .format(epoch_iter + 1, TRAIN_PARAMS['EPOCHS_NUM'], st_iter + 1, self.model_info['total_steps'], loss_sum[0] / iter_count, loss_sum[1] / iter_count, loss_sum[3] / iter_count))
+                    #NEPTUNE LOSS
+                    run["train/lossC"].log(neptune_loss_C)
+                    run["train/lossG"].log(neptune_loss_G)
+                    run["train/lossS"].log(neptune_loss_S)
+
                     total_iter = self.model_info['total_steps'] * epoch_iter + st_iter
                     loss_sum, iter_count = self.reinit_loss()
+                    
+                
 
             ##### Save models and images
             if (epoch_iter + 1) % OUTPUT_PARAMS['SAVE_EPOCH']  == 0:
@@ -305,6 +329,7 @@ class Train_GAN():
                 # make a separate checkpoint
                 if (epoch_iter + 1) % OUTPUT_PARAMS['SAVE_CHECKPOINT'] == 0:
                     self.save_model(epoch_iter=e_iter, mode_save=1)
+        run.stop()  
 
 
 
@@ -340,10 +365,7 @@ def run_exp(TRAIN_PARAMS):
                   'device_comp': device_comp,
                   'label_num': label_num,
                   }
-
+    
     ##### INITIALIZE AND START TRAINING
     trainer = Train_GAN(model_info=model_info, device_comp=device_comp, num_classes=label_num, gan_type=TRAIN_PARAMS['GAN_TYPE'])
     trainer.train_model(loaders=loaders)
-    
-if __name__ == '__main__':
-    run_exp(TRAIN_PARAMS)

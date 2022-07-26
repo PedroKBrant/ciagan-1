@@ -98,6 +98,8 @@ def get_lndm(path_img, path_out, start_id = 0, dlib_path=""):
 
                 result = Image.fromarray((img_lndm).astype(np.uint8))
                 result.save(join(path_out, dir_proc['lnd'], fld, imglist_all[it]+".jpg"))
+                from matplotlib import pyplot as plt
+                imgplot = plt.imshow(result)
 
                 img_msk = np.ones((res_h, res_w, 3), np.uint8) * 255
 
